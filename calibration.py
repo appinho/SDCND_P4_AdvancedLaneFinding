@@ -1,0 +1,1 @@
+# chessboard size 9x6
