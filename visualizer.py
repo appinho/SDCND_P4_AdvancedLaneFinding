@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
+import numpy as np
+import cv2
 # # Create an image to draw the lines on
 # warp_zero = np.zeros_like(warped).astype(np.uint8)
 # color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
@@ -91,6 +92,32 @@ def plot_perspective_transform(image, topdownimage, src, dst):
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     plt.show()
 
-def plot_histogram(histogram):
-    plt.plot(histogram)
+def plot_histogram(hist_left,hist_right):
+    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
+    f.tight_layout()
+    ax1.plot(hist_left)
+    ax1.set_title('Left Histogram', fontsize=20)
+    ax2.plot(hist_right)
+    ax2.set_title('Right Histogram', fontsize=20)
+    plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     plt.show()
+
+def get_result(image,warped,pts,Minv,undist):
+    warp_zero = np.zeros_like(warped).astype(np.uint8)
+    color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(color_warp, np.int_([pts]), (0, 255, 0))
+
+    # Warp the blank back to original image space using inverse perspective matrix (Minv)
+    newwarp = cv2.warpPerspective(color_warp, Minv, (image.shape[1], image.shape[0]))
+    # Combine the result with the original image
+    result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
+
+    return result
+
+def save_image(image, save_directory):
+    plt.imshow(image)
+    #plt.show()
+    #print(save_directory)
+    plt.imsave(save_directory+'.png',image)

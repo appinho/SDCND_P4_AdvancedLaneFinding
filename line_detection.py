@@ -22,11 +22,15 @@ class LineDetector():
         self.thresh_min_grad_mag = 10
         self.thresh_max_grad_mag = 255
         self.kernel_size = 3
+        self.false_counter = 0
 
         self.ym_per_pix = 30/720 # meters per pixel in y dimension
         self.xm_per_pix = 3.7/700 # meters per pixel in x dimension
+        self.midpoint = 640
+        self.pts = np.array([])
 
-        self.debug = True
+
+        self.debug = False
 
     def distortion_correction(self,image):
         """
@@ -53,34 +57,14 @@ class LineDetector():
         upper_color = np.array([85, 255, 255])
         bin_color_img = cv2.inRange(hls, lower_color, upper_color)
 
-        #visualizer.plot_two_images(image,bin_color_img,'Thresholding')
-        # Apply each of the thresholding functions
-        # gradx = self.abs_sobel_thresh(gray, orient='x', sobel_kernel=self.kernel_size,
-        #                               thresh=(self.thresh_min_sobel_x, self.thresh_max_sobel_x))
-        # grady = self.abs_sobel_thresh(gray, orient='y', sobel_kernel=self.kernel_size,
-        #                               thresh=(self.thresh_min_sobel_y, self.thresh_max_sobel_y))
-        # mag_binary = self.mag_thresh(gray, sobel_kernel=self.kernel_size,
-        #                               thresh=(self.thresh_min_grad_mag, self.thresh_max_grad_mag))
-        # dir_binary = self.dir_threshold(gray, sobel_kernel=self.kernel_size,
-        #                               thresh=(self.thresh_min_grad_dir, self.thresh_max_grad_dir))
-        #
-        # combined = np.zeros_like(dir_binary)
-        # combined[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
-        #
-        # combined_sobel = np.zeros_like(dir_binary)
-        # combined_gradient = np.zeros_like(dir_binary)
-        # combined_sobel[((gradx == 1) & (grady == 1))] = 1
-        # combined_gradient[((mag_binary == 1) & (dir_binary == 1))] = 1
-        # visualizer.plot_two_times_four_images([image,gradx,grady,combined_sobel,
-        #                             combined,mag_binary,dir_binary,combined_gradient])
-
         return bin_color_img
 
     def perspective_transform(self,image,src,dst):
         M = cv2.getPerspectiveTransform(src, dst)
+        Minv = cv2.getPerspectiveTransform(dst, src)
         img_size = (image.shape[1], image.shape[0])
         warped = cv2.warpPerspective(image, M, img_size, flags=cv2.INTER_LINEAR)
-        return warped
+        return warped,Minv
 
 
     def abs_sobel_thresh(self, gray, orient='x', sobel_kernel=3, thresh=(0, 255)):
@@ -109,7 +93,7 @@ class LineDetector():
         scaled_magn = np.uint8(255 * magn / np.max(magn))
         # 5) Create a binary mask where mag thresholds are met
         mag_binary = np.zeros_like(scaled_magn)
-        mag_binary[(scaled_magn >= thresh[0]) & (scaled_magn <= thresh[1])] = 1
+        mag_binary[(scaled_magn >= thresh[0]) & (scaled_magn <= thresh[1])] = 255
         # 6) Return this mask as your binary_output image
         return mag_binary
 
@@ -129,22 +113,26 @@ class LineDetector():
         # 6) Return this mask as your binary_output image
         return dir_binary
 
-    def find_peaks(self,image):
-        hist = np.sum(image[image.shape[0] // 2:, :], axis=0)
-        visualizer.plot_histogram(hist)
-        
-    def find_polynomial(self,binary_warped):
+    def find_polynomial(self,image,binary_warped):
 
         # Assuming you have created a warped binary image called "binary_warped"
         # Take a histogram of the bottom half of the image
-        histogram = np.sum(binary_warped[binary_warped.shape[0] // 2:, :], axis=0)
-        # Create an output image to draw on and  visualize the result
-        out_img = np.dstack((binary_warped, binary_warped, binary_warped)) * 255
+        histogram = np.sum(binary_warped, axis=0)
+        left_histogram = histogram[:self.midpoint]
+        right_histogram = histogram[self.midpoint:]
+
+
         # Find the peak of the left and right halves of the histogram
         # These will be the starting point for the left and right lines
-        midpoint = np.int(histogram.shape[0] / 2)
-        leftx_base = np.argmax(histogram[:midpoint])
-        rightx_base = np.argmax(histogram[midpoint:]) + midpoint
+
+        left_base = np.argmax(left_histogram)
+        right_base = np.argmax(right_histogram)
+        leftx_base = left_base
+        rightx_base = right_base + self.midpoint
+
+        if self.debug:
+            visualizer.plot_histogram(left_histogram,right_histogram)
+            print(histogram.shape, left_base, right_base)
 
         # Choose the number of sliding windows
         nwindows = 9
@@ -165,6 +153,8 @@ class LineDetector():
         left_lane_inds = []
         right_lane_inds = []
 
+        # Create an output image to draw on and  visualize the result
+        out_img = np.dstack((binary_warped, binary_warped, binary_warped)) * 255
         # Step through the windows one by one
         for window in range(nwindows):
             # Identify window boundaries in x and y (and right and left)
@@ -193,9 +183,14 @@ class LineDetector():
             if len(good_right_inds) > minpix:
                 rightx_current = np.int(np.mean(nonzerox[good_right_inds]))
 
-        # Concatenate the arrays of indices
         left_lane_inds = np.concatenate(left_lane_inds)
         right_lane_inds = np.concatenate(right_lane_inds)
+
+        if len(left_lane_inds) == 0 or len(right_lane_inds) == 0:
+            print('No lines found')
+            self.false_counter += 1
+            visualizer.save_image(image,'frame' + str(self.false_counter))
+            return []
 
         # Extract left and right line pixel positions
         leftx = nonzerox[left_lane_inds]
@@ -215,7 +210,9 @@ class LineDetector():
 
         out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
         out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-        visualizer.plot_polynomial_fit(binary_warped,out_img,left_fitx,right_fitx,ploty)
+
+        if self.debug:
+            visualizer.plot_polynomial_fit(binary_warped,out_img,left_fitx,right_fitx,ploty)
 
         # Fit new polynomials to x,y in world space
         left_fit_cr = np.polyfit(ploty * self.ym_per_pix, left_fitx * self.xm_per_pix, 2)
@@ -227,27 +224,39 @@ class LineDetector():
         right_curverad = ((1 + (2 * right_fit_cr[0] * y_eval * self.ym_per_pix + right_fit_cr[1]) ** 2) ** 1.5) \
                          / np.absolute(2 * right_fit_cr[0])
         # Now our radius of curvature is in meters
-        print(left_curverad, 'm', right_curverad, 'm')
+        if self.debug:
+            print(left_curverad, 'm', right_curverad, 'm')
 
-    def work_on_test_image(self,image):
+        # Recast the x and y points into usable format for cv2.fillPoly()
+        pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+        pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+        pts = np.hstack((pts_left, pts_right))
+
+        # back up for next frame
+        self.pts = pts
+        print(self.pts.shape)
+
+        return pts
+
+    def process_image(self,image):
         """
         Test function to propagate a test image
         :return: None
         """
 
         # Read image shape
-
+        image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
         img_size = image.shape
         # print(img_size)
 
         # Distortion correction
         dist = self.distortion_correction(image)
-        if False:#self.debug:
+        if self.debug:
             visualizer.plot_two_images(image,dist,'Distortion')
 
         # Get thresholded binary image
         binary_image = self.create_thresholded_image(dist)
-        if False:
+        if self.debug:
             visualizer.plot_two_images(image,binary_image,'Thresholding')
 
         # Perspective transform
@@ -263,49 +272,86 @@ class LineDetector():
              [(img_size[1] * 3 / 4), img_size[0]],
              [(img_size[1] * 3 / 4), 0]])
         # print(src,dst)
-        topdown_image = self.perspective_transform(binary_image,src,dst)
+        topdown_image,Minv = self.perspective_transform(binary_image,src,dst)
         if self.debug:
             visualizer.plot_perspective_transform(binary_image,topdown_image,src,dst)
 
-        self.find_polynomial(topdown_image)
+        pts = self.find_polynomial(image,topdown_image)
 
-    def adjust_parameters(self):
+        if len(pts) == 0:
+            pts = self.pts
+            print('Previous points are taken')
+            print(self.pts)
+
+        result = visualizer.get_result(image,topdown_image,pts,Minv,image)
+
+        if self.debug:
+            visualizer.plot_two_images(image,result,'Process')
+        return result
+
+    def adjust_parameters(self,image):
         def nothing(x):
             pass
         
         trackbar = np.zeros((200, 560, 3), np.uint8)
         cv2.namedWindow('Parameter')
-        cv2.createTrackbar('Hue min', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('Sat min', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('Val min', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('Hue max', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('Sat max', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('Val max', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('Erode kernel size', 'Parameter', 0, 20, nothing)
-        cv2.createTrackbar('Dilate kernel size', 'Parameter', 0, 20, nothing)
-        switch = '1'
-        cv2.createTrackbar(switch, 'Parameter', 0, 1, nothing)
+        cv2.createTrackbar('H min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('L min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('S min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('H max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('L max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('S max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('G ker', 'Parameter', 0, 10, nothing)
+        cv2.createTrackbar('G min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('G max', 'Parameter', 0, 255, nothing)
 
         while (True):
-            image = mpimg.imread('test_images/test5.jpg')
             # read parameters
-            hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
-            h_min = cv2.getTrackbarPos('Hue min', 'Parameter')
-            s_min = cv2.getTrackbarPos('Sat min', 'Parameter')
-            v_min = cv2.getTrackbarPos('Val min', 'Parameter')
-            h_max = cv2.getTrackbarPos('Hue max', 'Parameter')
-            s_max = cv2.getTrackbarPos('Sat max', 'Parameter')
-            v_max = cv2.getTrackbarPos('Val max', 'Parameter')
+            hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
+            gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+            h_min = cv2.getTrackbarPos('H min', 'Parameter')
+            l_min = cv2.getTrackbarPos('L min', 'Parameter')
+            s_min = cv2.getTrackbarPos('S min', 'Parameter')
+            h_max = cv2.getTrackbarPos('H max', 'Parameter')
+            l_max = cv2.getTrackbarPos('L max', 'Parameter')
+            s_max = cv2.getTrackbarPos('S max', 'Parameter')
+            g_kernel = cv2.getTrackbarPos('G ker', 'Parameter')
+            g_min = cv2.getTrackbarPos('G min', 'Parameter')
+            g_max = cv2.getTrackbarPos('G max', 'Parameter')
             # filter color
-            lower_color = np.array([h_min, s_min, v_min])
+            lower_color = np.array([h_min, l_min, s_min])
             # lower_color = np.array([0,55,75])
-            upper_color = np.array([h_max, s_max, v_max])
+            upper_color = np.array([h_max, l_max, s_max])
             # upper_color = np.array([64,255,255])
-            bin_color_img = cv2.inRange(hsv, lower_color, upper_color)
+            bin_color_img = cv2.inRange(hls, lower_color, upper_color)
             # display steps
             cv2.imshow('Parameter', trackbar)
-            cv2.moveWindow('Parameter', 1200, 1200)
-            cv2.imshow('Input', bin_color_img)
+            cv2.moveWindow('Parameter', 1200, 800)
+            # visualizer.plot_two_images(image,bin_color_img,'Thresholding')
+            # Apply each of the thresholding functions
+            gradx = self.abs_sobel_thresh(gray, orient='x', sobel_kernel=self.kernel_size,
+                                          thresh=(self.thresh_min_sobel_x, self.thresh_max_sobel_x))
+            grady = self.abs_sobel_thresh(gray, orient='y', sobel_kernel=self.kernel_size,
+                                          thresh=(self.thresh_min_sobel_y, self.thresh_max_sobel_y))
+            mag_binary = self.mag_thresh(gray, sobel_kernel=g_kernel*2+1,
+                                          thresh=(g_min, g_max))
+            dir_binary = self.dir_threshold(gray, sobel_kernel=self.kernel_size,
+                                          thresh=(self.thresh_min_grad_dir, self.thresh_max_grad_dir))
+
+            combined = np.zeros_like(dir_binary)
+            combined[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
+
+            combined_sobel = np.zeros_like(dir_binary)
+            combined_gradient = np.zeros_like(dir_binary)
+            combined_sobel[((gradx == 1) & (grady == 1))] = 1
+            combined_gradient[((mag_binary == 1) & (dir_binary == 1))] = 1
+            cv2.imshow('HLS', bin_color_img)
+            cv2.moveWindow('HLS', 1200, 0)
+            cv2.imshow('Gradient', mag_binary)
+            # visualizer.plot_two_times_four_images([image,gradx,grady,combined_sobel,
+            #                             combined,mag_binary,dir_binary,combined_gradient])
+            # cv2.imshow('Output', bin_color_img)
+            # cv2.imshow('Input', image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
