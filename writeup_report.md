@@ -1,45 +1,36 @@
 # Project: Advanced Lane Finding Project
 
-The goals / steps of this project are the following:
-
-* Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
-* Apply a distortion correction to raw images.
-* Use color transforms, gradients, etc., to create a thresholded binary image.
-* Apply a perspective transform to rectify binary image ("birds-eye view").
-* Detect lane pixels and fit to find the lane boundary.
-* Determine the curvature of the lane and vehicle position with respect to center.
-* Warp the detected lane boundaries back onto the original image.
-* Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
-
 [//]: # (Image References)
 
-[image1]: ./output_images/camera_cal/calibration1.jpg "Calibration"
-[image2]: ./test_images/test1.jpg "Road Transformed"
+[image1]: ./output_images/camera_cal/corners13.png "Corner detection"
+[image2]: ./output_images/camera_cal/distortion14.png "Corner detection"
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
 [image6]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
 
-## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
-
-### 1 Camera Calibration
+### Preprocessing: Camera Calibration
 
 Because each camera has its own characteristics, a calibration is necessary to obtain undistorted, clean images to further work on. Therefore, 20 images from different perspectives are taken of a chessboard pattern that is hanging at a wall. The chessboard pattern delivers a high contrast structure to find corners that are used to calculate the distortion factor.  
 
 The code for this step is contained in the file: "calibration.py".
 
-A loop over all calibration images is performed. In each iteration, the image is converted into grayscale first. Then the OpenCV command `findChessboardCorners()` is executed to obtain the detected corners of the images. In the case the correct amount of corners are detected, for a chessboard with 9 rows and 6 columns it would mean 54 corners, the result is stored in an image point vector. Moreover, a object point vector is filled that has the undistorted coordinates in it and where the z coordinate is 0, because these points should all lay in one plane. 
+A loop over all calibration images is performed. In each iteration, the image is converted into grayscale first. Then the OpenCV command `findChessboardCorners()` is executed to obtain the detected corners of the images. In the case the correct amount of corners are detected, for a chessboard with 10 rows and 7 columns it would mean (10-1)x(7-1)= 54 corners, the result is stored in an image point vector. Moreover, a object point vector is filled that has the undistorted coordinates in it and where the z coordinate is 0, because these points should all lay in one plane. 
+
+An example of the detected corners can be seen here:
+
+![alt text][image1]
 
 After all calibration images append their results to the image and object point vectors, these vectors are used within the OpenCV command `calibrateCamera()` which returns, among other things, the calibration matrix and the distortion coefficients.  
 
 An example of this step can be seen here:
 
-![alt text][image1]
+![alt text][image2]
 
-### Pipeline (single images)
+### Pipeline processing
 
-#### 1. Provide an example of a distortion-corrected image.
+#### Step 1. Undistort input image.
 
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
 ![alt text][image2]
