@@ -29,6 +29,19 @@ class LineDetector():
         self.midpoint = 640
         self.pts = np.array([])
 
+        self.history_right_curvature = []
+        self.history_left_curvature = []
+        self.history_right_line = []
+        self.history_left_line = []
+
+        self.state_right_curvature = []
+        self.state_left_curvature = []
+        self.state_right_line = []
+        self.state_left_line = []
+
+        self.smooth_factor = 0.95
+
+        self.max_curvature = 10000
 
         self.debug = False
 
@@ -127,8 +140,31 @@ class LineDetector():
 
         left_base = np.argmax(left_histogram)
         right_base = np.argmax(right_histogram)
-        leftx_base = left_base
-        rightx_base = right_base + self.midpoint
+
+        if left_base == 0:
+            leftx_base = self.history_left_line[-1]
+            print('Left base not found')
+        else:
+            leftx_base = left_base
+        if right_base == 0:
+            rightx_base = self.history_right_line[-1]
+            print('Right base not found')
+        else:
+            rightx_base = right_base + self.midpoint
+
+        self.history_left_line.append(leftx_base)
+        self.history_right_line.append(rightx_base)
+
+        if len(self.history_left_line) == 1:
+            self.state_left_line.append(leftx_base)
+        else:
+            self.state_left_line.append(self.smooth_factor*self.state_left_line[-1] +
+                                        (1-self.smooth_factor)*leftx_base)
+        if len(self.history_right_line) == 1:
+            self.state_right_line.append(rightx_base)
+        else:
+            self.state_right_line.append(self.smooth_factor*self.state_right_line[-1] +
+                                        (1-self.smooth_factor)*rightx_base)
 
         if self.debug:
             visualizer.plot_histogram(left_histogram,right_histogram)
@@ -223,9 +259,30 @@ class LineDetector():
                         / np.absolute(2 * left_fit_cr[0])
         right_curverad = ((1 + (2 * right_fit_cr[0] * y_eval * self.ym_per_pix + right_fit_cr[1]) ** 2) ** 1.5) \
                          / np.absolute(2 * right_fit_cr[0])
+
+        if left_curverad > self.max_curvature:
+            self.history_left_curvature.append(self.max_curvature)
+        else:
+            self.history_left_curvature.append(left_curverad)
+        if right_curverad > self.max_curvature:
+            self.history_right_curvature.append(self.max_curvature)
+        else:
+            self.history_right_curvature.append(right_curverad)
+
+        if len(self.history_left_curvature) == 1:
+            self.state_left_curvature.append(left_curverad)
+        else:
+            self.state_left_curvature.append(self.smooth_factor*self.state_left_curvature[-1] +
+                                        (1-self.smooth_factor)*self.history_left_curvature[-1])
+        if len(self.history_right_curvature) == 1:
+            self.state_right_curvature.append(right_curverad)
+        else:
+            self.state_right_curvature.append(self.smooth_factor*self.state_right_curvature[-1] +
+                                        (1-self.smooth_factor)*self.history_right_curvature[-1])
+
         # Now our radius of curvature is in meters
-        if self.debug:
-            print(left_curverad, 'm', right_curverad, 'm')
+        # if self.debug:
+        # print(left_curverad, 'm', right_curverad, 'm')
 
         # Recast the x and y points into usable format for cv2.fillPoly()
         pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
@@ -234,7 +291,6 @@ class LineDetector():
 
         # back up for next frame
         self.pts = pts
-        print(self.pts.shape)
 
         return pts
 
@@ -281,9 +337,9 @@ class LineDetector():
         if len(pts) == 0:
             pts = self.pts
             print('Previous points are taken')
-            print(self.pts)
+            # print(self.pts)
 
-        result = visualizer.get_result(image,topdown_image,pts,Minv,image)
+        result = visualizer.get_result(image,topdown_image,pts,Minv,image,100,-0.23)
 
         if self.debug:
             visualizer.plot_two_images(image,result,'Process')

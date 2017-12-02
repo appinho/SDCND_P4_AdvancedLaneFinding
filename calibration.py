@@ -5,7 +5,7 @@ import numpy as np
 import visualizer
 
 # Parameters
-debug = False
+debug = True
 calibration_directory = 'camera_cal/'
 output_directory = 'output_images/'
 calibration_file_name = 'calibration*.jpg'
@@ -27,7 +27,7 @@ def calibrate():
     images = glob.glob(calibration_directory+calibration_file_name)
 
     # Loop over the calibration images
-    for image_name in images:
+    for i,image_name in enumerate(images):
         # Read image
         image = mpimg.imread(image_name)
         # Convert to grayscale
@@ -37,7 +37,9 @@ def calibrate():
         # Write found corners
         if ret:
             # print(corners)
-            image = cv2.drawChessboardCorners(image, (nx, ny), corners, ret)
+            if debug:
+                image = cv2.drawChessboardCorners(image, (nx, ny), corners, ret)
+                visualizer.save_image(image,output_directory + calibration_directory + 'corners' + str(i))
             objp = np.zeros((nx*ny,3),np.float32)
             objp[:,:2] = np.mgrid[0:nx,0:ny].T.reshape(-1,2)
 
@@ -52,12 +54,13 @@ def calibrate():
 
     # Plot images
     if debug:
-        for image_name in images:
+        for i,image_name in enumerate(images):
             # Read image
             image = mpimg.imread(image_name)
 
             # Distortion correction
             dst = cv2.undistort(image, mtx, dist, None, mtx)
 
-            visualizer.plot_distortion_correction(image,dst)
+            visualizer.plot_two_images(image,dst,'Distortion correction',
+                                       output_directory + calibration_directory + 'distortion' + str(i))
     return mtx,dist

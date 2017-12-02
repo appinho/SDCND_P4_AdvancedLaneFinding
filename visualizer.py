@@ -2,23 +2,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 import cv2
-# # Create an image to draw the lines on
-# warp_zero = np.zeros_like(warped).astype(np.uint8)
-# color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
-#
-# # Recast the x and y points into usable format for cv2.fillPoly()
-# pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
-# pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
-# pts = np.hstack((pts_left, pts_right))
-#
-# # Draw the lane onto the warped blank image
-# cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
-#
-# # Warp the blank back to original image space using inverse perspective matrix (Minv)
-# newwarp = cv2.warpPerspective(color_warp, Minv, (image.shape[1], image.shape[0]))
-# # Combine the result with the original image
-# result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
-# plt.imshow(result)
 
 def plot_two_images(image1, image2, title, save_directory=''):
     # Plot original image and undistorted image
@@ -29,7 +12,7 @@ def plot_two_images(image1, image2, title, save_directory=''):
     ax2.imshow(image2, cmap='gray')
     ax2.set_title('Image after ' + title, fontsize=20)
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
-    plt.show()
+    #plt.show()
     if save_directory:
         plt.savefig(save_directory)
 
@@ -102,7 +85,7 @@ def plot_histogram(hist_left,hist_right):
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     plt.show()
 
-def get_result(image,warped,pts,Minv,undist):
+def get_result(image,warped,pts,Minv,undist,curvature,lane_offset):
     warp_zero = np.zeros_like(warped).astype(np.uint8)
     color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
 
@@ -114,7 +97,37 @@ def get_result(image,warped,pts,Minv,undist):
     # Combine the result with the original image
     result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
 
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    cv2.putText(result, 'Radius of Curvature = ' + str(curvature) + 'm',
+                (230, 50), font, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(result, 'Relative vehicle position to lane center = ' + str(lane_offset) + 'm',
+                (430, 50), font, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
     return result
+
+def plot_history(detector):
+    lc = detector.history_left_curvature
+    rc = detector.history_right_curvature
+    slc = detector.state_left_curvature
+    src = detector.state_right_curvature
+    sac = [(src[i]+slc[i])/2 for i in range(len(slc))]
+    ll = detector.history_left_line
+    rl = detector.history_right_line
+    sll = detector.state_left_line
+    srl = detector.state_right_line
+    sal = [(srl[i] + sll[i]) / 2 for i in range(len(sll))]
+    tc = range(len(lc))
+    tl = range(len(ll))
+
+    fig1 = plt.figure()
+    ax1 = fig1.add_subplot(211)
+    # tc, lc, 'r--', tc, rc,'b--',
+    ax1.plot(tc, slc, 'r', tc, src,'b',sac,'g')
+    ax2 = fig1.add_subplot(212)
+    # tl, ll, 'r--', tl, rl,'b--',
+    ax2.plot(tl, sll, 'r', tl, srl,'b',sal,'g')
+
+    plt.show()
 
 def save_image(image, save_directory):
     plt.imshow(image)
