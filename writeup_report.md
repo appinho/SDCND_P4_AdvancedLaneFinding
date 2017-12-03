@@ -3,18 +3,24 @@
 [//]: # (Image References)
 
 [image1]: ./output_images/camera_cal/corners13.png "Corner detection"
-[image2]: ./output_images/camera_cal/distortion14.png "Corner detection"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[image2]: ./output_images/camera_cal/distortion14.png "Chessboard distortion"
+[image3]: ./output-images/test_image/distortion_correction.png "Test image distortion"
+[image4]: ./output-images/test_image/colorspaces.png "Colorspaces"
+[image5]: ./output-images/test_image/image_thresholding.png "Thresholded image"
+[image6]: ./output-images/test_image/perspective_transform_straight.png "Perspective transform"
+[image7]: ./output-images/test_image/lane_histograms.png "Histograms of lane information"
+[image8]: ./output-images/test_image/polynomial_fit.png "Polynomial fit"
+[image9]: ./output-images/test_image/result.png "Result"
+[image10]: ./output-images/test_image/history.png "History of curvature and lane offset"
 [video1]: ./project_video.mp4 "Video"
+
+The executable code can be found in: `main.py`
 
 ### Preprocessing: Camera Calibration
 
 Because each camera has its own characteristics, a calibration is necessary to obtain undistorted, clean images to further work on. Therefore, 20 images from different perspectives are taken of a chessboard pattern that is hanging at a wall. The chessboard pattern delivers a high contrast structure to find corners that are used to calculate the distortion factor.  
 
-The code for this step is contained in the file: "calibration.py".
+The code for this step is contained in the file: `calibration.py`
 
 A loop over all calibration images is performed. In each iteration, the image is converted into grayscale first. Then the OpenCV command `findChessboardCorners()` is executed to obtain the detected corners of the images. In the case the correct amount of corners are detected, for a chessboard with 10 rows and 7 columns it would mean (10-1)x(7-1)= 54 corners, the result is stored in an image point vector. Moreover, a object point vector is filled that has the undistorted coordinates in it and where the z coordinate is 0, because these points should all lay in one plane. 
 
@@ -30,56 +36,74 @@ An example of this step can be seen here:
 
 ### Pipeline processing
 
-#### Step 1. Undistort input image.
+An object of the class in `lane_finding.py` is initialized that contains all functions for the entire processing pipeline. To demonstrate the pipeline one input image in processed step by step. Later this pipeline is simply executed for each frame of a video which results in the output video `output_video.mp4`.
 
-To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![alt text][image2]
+#### Step 1: Undistort input image.
 
-#### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
+First, the input image is undistorted based on the found information about the calibration matrix and the distortion coefficients from the preprocessing step.  
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+The code can be found in `lane_finding.py` in function `distortion_correction()` and the result looks like this:
 
 ![alt text][image3]
 
-#### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
+Especially, if you look at the edges of both images you can see the effect of the distortion correction.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+#### Step 2: Threshold the undistorted image to obtain lane information
 
-```python
-src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
-dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
-```
+In this step, the undistorted image is investigated for its lane information. Therefore, each channel or the RGB and HLS are displayed. Moreover, the Sobel Operator in x- and y- direction is applied on the grayscale version of the image as well as the Gradient Magnitude and Gradient Orientation.  
 
-This resulted in the following source and destination points:
-
-| Source        | Destination   | 
-|:-------------:|:-------------:| 
-| 585, 460      | 320, 0        | 
-| 203, 720      | 320, 720      |
-| 1127, 720     | 960, 720      |
-| 695, 460      | 960, 0        |
-
-I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
+The code can be found in `visualizer.py` in function `plot_colorspaces()` and applied on the test image all following channels can be seen:  
 
 ![alt text][image4]
 
-#### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
+A combination of the Red Channel and the Saturation Channel are used. Therefore, each channel is filtered by a minimum value and both results are combined by an "AND" operator.  
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+The code can be found in `lane_finding.py` in function `image_thresholding()` and applied on the test image it looks like this:  
 
 ![alt text][image5]
 
-#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+#### 3. Perspective transform 
 
-I did this in lines # through # in my code in `my_other_file.py`
+The code for the perspective transform includes a function called `perspective_transform()` in `lane_finding.py`.
+For the test image of straight lines the trapezium and the resulting warped rectangle are defined as:
+
+```python
+self.trapezium = np.float32([
+    [560, 475],
+    [205, self.image_height],
+    [1105, self.image_height],
+    [724, 475]
+])
+self.rectangle = np.float32(
+    [[(self.image_width / 4), 0],
+     [(self.image_width / 4), self.image_height],
+     [(self.image_width * 3 / 4), self.image_height],
+     [(self.image_width * 3 / 4), 0]])
+```
+
+The result of the perspective transform can be seen here:
+
+![alt text][image6]
+
+#### 4. Polynomial fit
+
+The code of the polynomial fit can again be found in `lane_finding.py` under the function `fit_polynomial()`.
+Then, the warped image is investigated for peaks in the histogram of their x-values to find the x-position of the lane beginnings.
+
+The resulting histogram of the test image can be seen here:  
+
+![alt text][image7]
+
+Next, a polynomial of second degree is fit through the defined sliding windows.
+
+The result of the polynomial fit can be seen here:
+
+![alt text][image8]
+
+#### 5. Calculation of curvature and lane offset
+
+The calculations can be found in `lane.py` within the methods `calculate_curvature()` and `calculate_lane_offset`.
+
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
