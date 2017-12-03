@@ -12,7 +12,7 @@
 [image8]: ./output_images/test_image/polynomial_fit.png "Polynomial fit"
 [image9]: ./output_images/test_image/result.png "Result"
 [image10]: ./output_images/test_image/history.png "History of curvature and lane offset"
-[video1]: ./project_video.mp4 "Video"
+[video1]: ./output_video.mp4 "Video"
 
 ### Pipeline
 
