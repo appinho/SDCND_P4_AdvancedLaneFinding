@@ -2,6 +2,7 @@ import matplotlib.image as mpimg
 import cv2
 import visualizer
 import numpy as np
+import image_processing
 
 class LineDetector():
     def __init__(self,C, coeff):
@@ -351,36 +352,67 @@ class LineDetector():
         
         trackbar = np.zeros((200, 560, 3), np.uint8)
         cv2.namedWindow('Parameter')
-        cv2.createTrackbar('H min', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('L min', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('S min', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('H max', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('L max', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('S max', 'Parameter', 0, 255, nothing)
-        cv2.createTrackbar('G ker', 'Parameter', 0, 10, nothing)
+        cv2.createTrackbar('R min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('R max', 'Parameter', 0, 255, nothing)
         cv2.createTrackbar('G min', 'Parameter', 0, 255, nothing)
         cv2.createTrackbar('G max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('B min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('B max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('H min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('H max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('L min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('L max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('S min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('S max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('Sobel ker', 'Parameter', 0, 10, nothing)
+        cv2.createTrackbar('SX min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('SX max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('SY min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('SY max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('GM min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('GM max', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('GO min', 'Parameter', 0, 255, nothing)
+        cv2.createTrackbar('GO max', 'Parameter', 0, 255, nothing)
 
         while (True):
-            # read parameters
+            # Read parameters
             hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
             gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-            h_min = cv2.getTrackbarPos('H min', 'Parameter')
-            l_min = cv2.getTrackbarPos('L min', 'Parameter')
-            s_min = cv2.getTrackbarPos('S min', 'Parameter')
-            h_max = cv2.getTrackbarPos('H max', 'Parameter')
-            l_max = cv2.getTrackbarPos('L max', 'Parameter')
-            s_max = cv2.getTrackbarPos('S max', 'Parameter')
-            g_kernel = cv2.getTrackbarPos('G ker', 'Parameter')
+            r_min = cv2.getTrackbarPos('R min', 'Parameter')
+            r_max = cv2.getTrackbarPos('R max', 'Parameter')
             g_min = cv2.getTrackbarPos('G min', 'Parameter')
             g_max = cv2.getTrackbarPos('G max', 'Parameter')
-            # filter color
-            lower_color = np.array([h_min, l_min, s_min])
-            # lower_color = np.array([0,55,75])
-            upper_color = np.array([h_max, l_max, s_max])
-            # upper_color = np.array([64,255,255])
-            bin_color_img = cv2.inRange(hls, lower_color, upper_color)
-            # display steps
+            b_min = cv2.getTrackbarPos('B min', 'Parameter')
+            b_max = cv2.getTrackbarPos('B max', 'Parameter')
+            h_min = cv2.getTrackbarPos('H min', 'Parameter')
+            h_max = cv2.getTrackbarPos('H max', 'Parameter')
+            l_min = cv2.getTrackbarPos('L min', 'Parameter')
+            l_max = cv2.getTrackbarPos('L max', 'Parameter')
+            s_min = cv2.getTrackbarPos('S min', 'Parameter')
+            s_max = cv2.getTrackbarPos('S max', 'Parameter')
+            s_kernel = cv2.getTrackbarPos('Sobel ker', 'Parameter')
+            sx_min = cv2.getTrackbarPos('SX min', 'Parameter')
+            sx_max = cv2.getTrackbarPos('SX max', 'Parameter')
+            sy_min = cv2.getTrackbarPos('SY min', 'Parameter')
+            sy_max = cv2.getTrackbarPos('SY max', 'Parameter')
+            gm_min = cv2.getTrackbarPos('GM min', 'Parameter')
+            gm_max = cv2.getTrackbarPos('GM max', 'Parameter')
+            go_min = cv2.getTrackbarPos('GO min', 'Parameter')
+            go_max = cv2.getTrackbarPos('GO max', 'Parameter')
+
+            # Filter HLS
+            lower_rgb = np.array([r_min, g_min, b_min])
+            upper_rgb = np.array([r_max, g_max, b_max])
+
+            # Filter HLS
+            lower_hls = np.array([h_min, l_min, s_min])
+            upper_hls = np.array([h_max, l_max, s_max])
+
+            # Result
+            bin_rgb = cv2.inRange(hls, lower_rgb, upper_rgb)
+            bin_hls = cv2.inRange(hls, lower_hls, upper_hls)
+            bin_sx = ima
+
             cv2.imshow('Parameter', trackbar)
             cv2.moveWindow('Parameter', 1200, 800)
             # visualizer.plot_two_images(image,bin_color_img,'Thresholding')

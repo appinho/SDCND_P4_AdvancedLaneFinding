@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 import cv2
+import image_processing
 
 def plot_two_images(image1, image2, title, save_directory=''):
-    # Plot original image and undistorted image
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
     f.tight_layout()
     ax1.imshow(image1, cmap='gray')
@@ -12,9 +12,63 @@ def plot_two_images(image1, image2, title, save_directory=''):
     ax2.imshow(image2, cmap='gray')
     ax2.set_title('Image after ' + title, fontsize=20)
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
-    #plt.show()
+    plt.show()
     if save_directory:
-        plt.savefig(save_directory)
+        f.savefig(save_directory)
+    plt.close(f)
+
+def plot_result(image,save_directory=''):
+    f = plt.figure()
+    plt.imshow(image)
+    plt.show()
+    if save_directory:
+        f.savefig(save_directory)
+    plt.close(f)
+
+def plot_colorspaces(image, save_directory=''):
+    # Perform transformations
+    original = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
+
+    f, axarr = plt.subplots(3, 4, figsize=(24, 12))
+    f.tight_layout()
+    axarr[0, 0].imshow(original)
+    axarr[0, 0].set_title('Original', fontsize=20)
+    axarr[0, 1].imshow(original[:,:,0], cmap='gray')
+    gray = original[:,:,0]
+    axarr[0, 1].set_title('Red channel', fontsize=20)
+    axarr[0, 2].imshow(original[:,:,1], cmap='gray')
+    axarr[0, 2].set_title('Green channel', fontsize=20)
+    axarr[0, 3].imshow(original[:,:,2], cmap='gray')
+    axarr[0, 3].set_title('Blue channel', fontsize=20)
+    axarr[1, 0].imshow(gray, cmap='gray')
+    axarr[1, 0].set_title('Gray channel', fontsize=20)
+    axarr[1, 1].imshow(hls[:,:,0], cmap='gray')
+    axarr[1, 1].set_title('Hue channel', fontsize=20)
+    axarr[1, 2].imshow(hls[:,:,1], cmap='gray')
+    axarr[1, 2].set_title('Lightness channel', fontsize=20)
+    axarr[1, 3].imshow(hls[:,:,2], cmap='gray')
+    axarr[1, 3].set_title('Saturation channel', fontsize=20)
+    axarr[2, 0].imshow(image_processing.sobel_operator(
+        gray,orient='x',thresh=[10,255]), cmap='gray')
+    axarr[2, 0].set_title('Sobel x', fontsize=20)
+    axarr[2, 1].imshow(image_processing.sobel_operator(
+        gray,orient='y',thresh=[30,255]), cmap='gray')
+    axarr[2, 1].set_title('Sobel y', fontsize=20)
+    axarr[2, 2].imshow(image_processing.gradient_magnitude(
+        gray,thresh=[30,255]), cmap='gray')
+    axarr[2, 2].set_title('Gradient magnitude', fontsize=20)
+    axarr[2, 3].imshow(image_processing.gradient_orientation(
+        gray,thresh=[0.7,1.3]
+    ), cmap='gray')
+    axarr[2, 3].set_title('Gradient orientation', fontsize=20)
+    plt.subplots_adjust(left=0., right=1, top=1, bottom=0.)
+    plt.show()
+    if save_directory:
+        f.savefig(save_directory + 'colorspaces')
+
+    plt.close(f)
 
 def plot_polynomial_fit(image1, image2, left_fitx, right_fitx, ploty, save_directory=''):
     # Plot original image and undistorted image
@@ -31,7 +85,9 @@ def plot_polynomial_fit(image1, image2, left_fitx, right_fitx, ploty, save_direc
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     plt.show()
     if save_directory:
-        plt.savefig(save_directory)
+        f.savefig(save_directory)
+    plt.close(f)
+
 
 def plot_two_times_four_images(images, save_directory=''):
     # Plot original image and undistorted image
@@ -56,10 +112,11 @@ def plot_two_times_four_images(images, save_directory=''):
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     plt.show()
     if save_directory:
-        plt.savefig(save_directory)
+        f.savefig(save_directory)
+    plt.close(f)
 
 
-def plot_perspective_transform(image, topdownimage, src, dst):
+def plot_perspective_transform(image, topdownimage, src, dst,save_directory=''):
     xs, ys = zip(*src)  # create lists of x and y values
     xd, yd = zip(*dst)  # create lists of x and y values
     # print(xs,ys)
@@ -74,8 +131,11 @@ def plot_perspective_transform(image, topdownimage, src, dst):
     ax2.set_title('Transformed Image', fontsize=20)
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     plt.show()
+    if save_directory:
+        f.savefig(save_directory)
+    plt.close(f)
 
-def plot_histogram(hist_left,hist_right):
+def plot_histogram(hist_left,hist_right,save_directory=''):
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
     f.tight_layout()
     ax1.plot(hist_left)
@@ -84,6 +144,9 @@ def plot_histogram(hist_left,hist_right):
     ax2.set_title('Right Histogram', fontsize=20)
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     plt.show()
+    if save_directory:
+        f.savefig(save_directory)
+    plt.close(f)
 
 def get_result(image,warped,pts,Minv,undist,curvature,lane_offset):
     warp_zero = np.zeros_like(warped).astype(np.uint8)
@@ -102,19 +165,19 @@ def get_result(image,warped,pts,Minv,undist,curvature,lane_offset):
     cv2.putText(result, 'Radius of Curvature = ' + str(curvature) + 'm',
                 (230, 50), font, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.putText(result, 'Relative vehicle position to lane center = ' + str(lane_offset) + 'm',
-                (430, 50), font, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
+                (230, 80), font, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
     return result
 
-def plot_history(detector):
-    lc = detector.history_left_curvature
-    rc = detector.history_right_curvature
-    slc = detector.state_left_curvature
-    src = detector.state_right_curvature
+def plot_history(detector,save_directory=''):
+    lc = detector.left_lane.history_curvature
+    rc = detector.right_lane.history_curvature
+    slc = detector.left_lane.history_smoothed_curvature
+    src = detector.right_lane.history_smoothed_curvature
     sac = [(src[i]+slc[i])/2 for i in range(len(slc))]
-    ll = detector.history_left_line
-    rl = detector.history_right_line
-    sll = detector.state_left_line
-    srl = detector.state_right_line
+    ll = detector.left_lane.history_lane_center
+    rl = detector.right_lane.history_lane_center
+    sll = detector.left_lane.history_smoothed_lane_center
+    srl = detector.right_lane.history_smoothed_lane_center
     sal = [(srl[i] + sll[i]) / 2 for i in range(len(sll))]
     tc = range(len(lc))
     tl = range(len(ll))
@@ -124,13 +187,10 @@ def plot_history(detector):
     # tc, lc, 'r--', tc, rc,'b--',
     ax1.plot(tc, slc, 'r', tc, src,'b',sac,'g')
     ax2 = fig1.add_subplot(212)
-    # tl, ll, 'r--', tl, rl,'b--',
-    ax2.plot(tl, sll, 'r', tl, srl,'b',sal,'g')
+    # tl, ll, 'r--', tl, rl,'b--', tl,
+    ax2.plot(sll, 'r', tl, srl,'b',sal,'g')
 
     plt.show()
+    if save_directory:
+        plt.savefig(save_directory)
 
-def save_image(image, save_directory):
-    plt.imshow(image)
-    #plt.show()
-    #print(save_directory)
-    plt.imsave(save_directory+'.png',image)

@@ -5,7 +5,7 @@ import numpy as np
 import visualizer
 
 # Parameters
-debug = True
+debug = False
 calibration_directory = 'camera_cal/'
 output_directory = 'output_images/'
 calibration_file_name = 'calibration*.jpg'
