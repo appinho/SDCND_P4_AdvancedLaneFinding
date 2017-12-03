@@ -12,11 +12,10 @@
 [image8]: ./output_images/test_image/polynomial_fit.png "Polynomial fit"
 [image9]: ./output_images/test_image/result.png "Result"
 [image10]: ./output_images/test_image/history.png "History of curvature and lane offset"
-[video1]: ./output_video.mp4 "Video"
 
 ### Pipeline
 
-Here is a [link to my video result](./project_video.mp4)
+Here is a [link to my video result](./output_video.mp4)
 
 The executable code can be found in: `main.py`
 
