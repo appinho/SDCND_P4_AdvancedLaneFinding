@@ -4,14 +4,14 @@
 
 [image1]: ./output_images/camera_cal/corners13.png "Corner detection"
 [image2]: ./output_images/camera_cal/distortion14.png "Chessboard distortion"
-[image3]: ./output-images/test_image/distortion_correction.png "Test image distortion"
-[image4]: ./output-images/test_image/colorspaces.png "Colorspaces"
-[image5]: ./output-images/test_image/image_thresholding.png "Thresholded image"
-[image6]: ./output-images/test_image/perspective_transform_straight.png "Perspective transform"
-[image7]: ./output-images/test_image/lane_histograms.png "Histograms of lane information"
-[image8]: ./output-images/test_image/polynomial_fit.png "Polynomial fit"
-[image9]: ./output-images/test_image/result.png "Result"
-[image10]: ./output-images/test_image/history.png "History of curvature and lane offset"
+[image3]: ./output_images/test_image/distortion_correction.png "Test image distortion"
+[image4]: ./output_images/test_image/colorspaces.png "Colorspaces"
+[image5]: ./output_images/test_image/image_thresholding.png "Thresholded image"
+[image6]: ./output_images/test_image/perspective_transform_straight.png "Perspective transform"
+[image7]: ./output_images/test_image/lane_histograms.png "Histograms of lane information"
+[image8]: ./output_images/test_image/polynomial_fit.png "Polynomial fit"
+[image9]: ./output_images/test_image/result.png "Result"
+[image10]: ./output_images/test_image/history.png "History of curvature and lane offset"
 [video1]: ./project_video.mp4 "Video"
 
 The executable code can be found in: `main.py`
