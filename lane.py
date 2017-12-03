@@ -15,6 +15,7 @@ class Lane():
         self.polynomial = np.array([])
         self.last_pts = np.array([])
         self.max_curvature = 10000
+        self.lane_offset = 0
         self.nonzero_x = np.array([0])
         self.nonzero_y = np.array([0])
         self.smoothing_factor = 0.95
@@ -162,4 +163,5 @@ class Lane():
             output_image[self.nonzero_y, self.nonzero_x] = [0, 0, 255]
 
     def calculate_lane_offset(self):
-        return self.current_lane_center
+        self.lane_offset = (self.current_lane_center-self.image_x_center)*self.xm_per_pix
+        return self.lane_offset

@@ -25,6 +25,13 @@ def plot_result(image,save_directory=''):
         f.savefig(save_directory)
     plt.close(f)
 
+def save_image(image, save_directory):
+    plt.imshow(image)
+    #plt.show()
+    #print(save_directory)
+    plt.imsave(save_directory+'.png',image)
+
+
 def plot_colorspaces(image, save_directory=''):
     # Perform transformations
     original = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
