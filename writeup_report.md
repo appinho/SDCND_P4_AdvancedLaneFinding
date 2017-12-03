@@ -68,7 +68,7 @@ The code can be found in `lane_finding.py` in function `image_thresholding()` an
 #### 3. Perspective transform 
 
 The code for the perspective transform includes a function called `perspective_transform()` in `lane_finding.py`.
-For the test image of straight lines the trapezium and the resulting warped rectangle are defined as:
+For the test image `straight_lines1.jpg` the trapezium and the resulting warped rectangle are defined as:
 
 ```python
 self.trapezium = np.float32([
