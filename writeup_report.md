@@ -107,15 +107,16 @@ Next, a polynomial of second degree is fit through the defined sliding windows. 
 
 #### 5. Calculation of curvature and lane offset
 
-The calculations can be found in `lane.py` within the methods `calculate_curvature()` and `calculate_lane_offset`.
-
+The calculations can be found in `lane.py` within the methods `calculate_curvature()` and `calculate_lane_offset()`.
+The curvature and the lane offset can be determined by using the found polynomial fit f(y) = A*y^2 + B*y + C. For the lane curvature A and B of the equation are used whereas the lane offset is calculated by the coefficient C. It is important to mention that a transformation from pixel values into real world meters is performed.
 
 #### 6. Result of pipeline
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+The resulting detected lane as well as the curvature and the lane offset are integrated in the following resulting picture:
 
 ![alt text][image9]
 
+For the video input `project_video.mp4`, a sanity check is included that filters out odd polynomial fits and if no pixels are found that would represent a lane. Then, the last decent estimation of the lane is taken. Moreover, a smoothing of the lane curvature and the lane offset is integrated to avoid odd jumps within the solution.
 
 ### Discussion
 
