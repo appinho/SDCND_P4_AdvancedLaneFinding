@@ -15,9 +15,8 @@
 
 ### Pipeline
 
-<a href="https://www.youtube.com/watch?v=joKuHeSrCAo
-" target="_blank"><img src=![alt text][image1]
-alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
+![youtube video](https://www.youtube.com/watch?v=joKuHeSrCAo =800x600)
+
 The executable code can be found in: `main.py`
 
 ### Preprocessing: Camera Calibration
