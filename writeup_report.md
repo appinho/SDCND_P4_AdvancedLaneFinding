@@ -14,8 +14,7 @@
 [image10]: ./output_images/test_image/history.png "History of curvature and lane offset"
 
 ### Pipeline
-
-![youtube video](https://www.youtube.com/watch?v=joKuHeSrCAo =800x600)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/joKuHeSrCAo/0.jpg)](https://www.youtube.com/watch?v=joKuHeSrCAo)
 
 The executable code can be found in: `main.py`
 
