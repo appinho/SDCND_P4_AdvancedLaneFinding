@@ -13,15 +13,17 @@ class Lane():
         self.history_smoothed_curvature = []
         self.lane_pixels = np.array([])
         self.polynomial = np.array([])
+        self.history_polynomial = []
         self.last_pts = np.array([])
         self.max_curvature = 10000
         self.lane_offset = 0
         self.nonzero_x = np.array([0])
         self.nonzero_y = np.array([0])
         self.smoothing_factor = 0.95
-        self.ym_per_pix = 0.1 #30/720 # meters per pixel in y dimension
-        self.xm_per_pix = 3.7/930 #3.7/700 # meters per pixel in x dimension
-
+        self.ym_per_pix = 30/720
+        self.xm_per_pix = 3.7/930
+        self.A_max = 0.0003
+        self.C_diff_max = 100
         # was the line detected in the last iteration?
         # self.detected = False
         # x values of the last n fits of the line
@@ -110,23 +112,50 @@ class Lane():
 
         self.lane_pixels = np.concatenate(lane_inds)
 
+        # Sanity check
+        sanity = True
+        # If no pixels for the lane have been found
         if len(self.lane_pixels) == 0:
-            return False
+            sanity = False
+        else:
+            # Fit polynomial of degree 2
+            self.nonzero_x = nonzerox[self.lane_pixels]
+            self.nonzero_y = nonzeroy[self.lane_pixels]
+            polynomial = np.polyfit(self.nonzero_y, self.nonzero_x, 2)
+            # If A is unreasonable high
+            if abs(polynomial[0]) > self.A_max:
+                sanity = False
+            # If the offset of the found lane changed too much
+            if len(self.history_polynomial) > 0 and \
+                            abs(polynomial[2]-self.history_polynomial[-1][2]) > self.C_diff_max:
+                sanity = False
 
-        # Fit polynomial of degree 2
-        self.nonzero_x = nonzerox[self.lane_pixels]
-        self.nonzero_y = nonzeroy[self.lane_pixels]
-        self.polynomial = np.polyfit(self.nonzero_y, self.nonzero_x, 2)
-        self.polynomial_meters = np.polyfit(self.nonzero_y*self.ym_per_pix,
-                                            self.nonzero_x*self.xm_per_pix,2)
+        # In case no lane pixels have been found or the polynomial seems unreasonable
+        # take most recent solution
+        if not sanity and len(self.history_polynomial) > 0:
+            polynomial = self.history_polynomial[-1]
 
-        return True
+
+        self.polynomial = polynomial
+        self.history_polynomial.append(polynomial)
+
+
+        # Smooth polynomial
+        # if len(self.polynomial) == 0:
+        #     self.polynomial = polynomial
+        # else:
+        #     self.polynomial = (self.smoothing_factor*self.polynomial) + \
+        #                           (1-self.smoothing_factor)*polynomial
+
+        x_meters = self.nonzero_x*self.xm_per_pix
+        y_meters = self.nonzero_y*self.ym_per_pix
+        self.polynomial_meters = np.polyfit(y_meters, x_meters, 2)
+
+        return sanity
 
     def calculate_curvature(self):
         y_eval = 720
-        curvature = ((1 + (2*self.polynomial[0]*y_eval + self.polynomial[1])**2)**1.5) \
-                         / np.absolute(2*self.polynomial[0])
-        curvature_meters = ((1 + (2*self.polynomial_meters[0]*y_eval*self.ym_per_pix
+        curvature = ((1 + (2*self.polynomial_meters[0]*y_eval*self.ym_per_pix
                                   + self.polynomial_meters[1])**2)**1.5) \
                          / np.absolute(2*self.polynomial_meters[0])
 

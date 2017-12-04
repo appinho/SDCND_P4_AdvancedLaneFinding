@@ -90,17 +90,17 @@ class LaneFinder():
         polygon_points = self.fit_polynomial(warped_image)
 
         # 5 Create output image
-        average_curvature = (self.left_lane.current_curvature + self.right_lane.current_curvature)/2
+        average_curvature = (self.left_lane.history_smoothed_curvature[-1] +
+                             self.right_lane.history_smoothed_curvature[-1])/2
         average_lane_offset = (self.left_lane.calculate_lane_offset() + self.right_lane.calculate_lane_offset())/2
         if len(polygon_points)>0:
             result = visualizer.get_result(image,warped_image,polygon_points,Minv,
-                                           undistorted_image,average_curvature,average_lane_offset)
+                                           undistorted_image,average_curvature,-average_lane_offset)
         else:
             result = image
 
         if debug:
-            visualizer.plot_result(result,
-                                   'output_images/test_image/result')
+            visualizer.plot_result(result,'output_images/test_image/result')
 
         bgr_result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
         # Return result
@@ -174,17 +174,17 @@ class LaneFinder():
 
         ploty = np.linspace(0, binary_image.shape[0] - 1, binary_image.shape[0])
         if not left_lane_found:
-            print('No left lines found')
+            # print('No left lines found')
             self.false_counter += 1
-            visualizer.save_image(binary_image,'frame' + str(self.false_counter))
+            # visualizer.save_image(binary_image,'frame' + str(self.false_counter))
             pts_left = self.left_lane.last_pts
         else:
             pts_left, left_fitx = self.left_lane.get_polynomial_points(ploty,'left')
 
         if not right_lane_found:
-            print('No right lines found')
+            # print('No right lines found')
             self.false_counter += 1
-            visualizer.save_image(binary_image,'frame' + str(self.false_counter))
+            # visualizer.save_image(binary_image,'frame' + str(self.false_counter))
             pts_right = self.right_lane.last_pts
         else:
             pts_right, right_fitx = self.right_lane.get_polynomial_points(ploty,'right')
@@ -199,7 +199,6 @@ class LaneFinder():
 
         pts = np.hstack((pts_left, pts_right))
 
-        #visualizer.plot_polynomial_fit(binary_image,out_img,left_fitx,right_fitx,ploty)
 
         # Calculate curvature
         self.left_lane.calculate_curvature()
@@ -207,42 +206,6 @@ class LaneFinder():
 
         return pts
 
-
-        # if len(self.history_left_curvature) == 1:
-        #     self.state_left_curvature.append(left_curverad)
-        # else:
-        #     self.state_left_curvature.append(self.smooth_factor*self.state_left_curvature[-1] +
-        #                                 (1-self.smooth_factor)*self.history_left_curvature[-1])
-        # if len(self.history_right_curvature) == 1:
-        #     self.state_right_curvature.append(right_curverad)
-        # else:
-        #     self.state_right_curvature.append(self.smooth_factor*self.state_right_curvature[-1] +
-        #                                 (1-self.smooth_factor)*self.history_right_curvature[-1])
-
-        # Now our radius of curvature is in meters
-        # if self.debug:
-        # print(left_curverad, 'm', right_curverad, 'm')
-
-        # # Recast the x and y points into usable format for cv2.fillPoly()
-        # pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
-        # pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
-        # pts = np.hstack((pts_left, pts_right))
-        #
-        # if len(self.left_lane.lane_pixels) == 0 or len(self.right_lane.lane_pixels) == 0:
-        #     print('No lines found')
-        #     self.false_counter += 1
-        #     visualizer.save_image(binary_image,'frame' + str(self.false_counter))
-        #     return []
-        # if len(self.history_left_line) == 1:
-        #     self.state_left_line.append(leftx_base)
-        # else:
-        #     self.state_left_line.append(self.smooth_factor*self.state_left_line[-1] +
-        #                                 (1-self.smooth_factor)*leftx_base)
-        # if len(self.history_right_line) == 1:
-        #     self.state_right_line.append(rightx_base)
-        # else:
-        #     self.state_right_line.append(self.smooth_factor*self.state_right_line[-1] +
-        #                                 (1-self.smooth_factor)*rightx_base)
 
     def adjust_parameters(self,image):
 

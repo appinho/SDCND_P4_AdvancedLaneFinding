@@ -13,9 +13,9 @@ cal_mtx,dist_coeff = calibration.calibrate()
 lane_finder = lane_finding.LaneFinder(cal_mtx,dist_coeff,image_size)
 
 # ON TEST IMAGE
-# lane_finding.debug = True
+lane_finding.debug = False
 # test_image = cv2.imread('test_images/test5.jpg')
-# visualizer.plot_colorspaces(test_image,'output_images/test_image/')
+# # visualizer.plot_colorspaces(test_image,'output_images/test_image/')
 # # lane_finder.adjust_parameters(test_image)
 # test_result = lane_finder.process_image(test_image)
 
@@ -45,4 +45,4 @@ cap.release()
 out.release()
 cv2.destroyAllWindows()
 
-visualizer.plot_history(lane_finder)
+# visualizer.plot_history(lane_finder)

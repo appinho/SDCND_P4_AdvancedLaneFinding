@@ -169,10 +169,15 @@ def get_result(image,warped,pts,Minv,undist,curvature,lane_offset):
 
     font = cv2.FONT_HERSHEY_SIMPLEX
 
-    cv2.putText(result, 'Radius of Curvature = ' + str(curvature) + 'm',
-                (230, 50), font, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
+    if curvature > 6000:
+        str_curv = '>6000m | STRAIGHT'
+    else:
+        str_curv = str(curvature) + 'm'
+
+    cv2.putText(result, 'Radius of Curvature = ' + str_curv,
+                (230, 50), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.putText(result, 'Relative vehicle position to lane center = ' + str(lane_offset) + 'm',
-                (230, 80), font, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
+                (230, 100), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
     return result
 
 def plot_history(detector,save_directory=''):
@@ -189,13 +194,23 @@ def plot_history(detector,save_directory=''):
     tc = range(len(lc))
     tl = range(len(ll))
 
+    al = [item[0] for item in detector.left_lane.history_polynomial]
+    tal = range(len(al))
+
+    ar = [item[0] for item in detector.right_lane.history_polynomial]
+    tar = range(len(ar))
+
     fig1 = plt.figure()
-    ax1 = fig1.add_subplot(211)
+    ax1 = fig1.add_subplot(411)
     # tc, lc, 'r--', tc, rc,'b--',
     ax1.plot(tc, slc, 'r', tc, src,'b',sac,'g')
-    ax2 = fig1.add_subplot(212)
+    ax2 = fig1.add_subplot(412)
     # tl, ll, 'r--', tl, rl,'b--', tl,
     ax2.plot(sll, 'r', tl, srl,'b',sal,'g')
+    ax3 = fig1.add_subplot(413)
+    ax3.plot(tal, al, 'r')
+    ax4 = fig1.add_subplot(414)
+    ax4.plot(tar, ar, 'r')
 
     plt.show()
     if save_directory:
