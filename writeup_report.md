@@ -93,15 +93,15 @@ The result of the perspective transform can be seen here:
 #### 4. Polynomial fit
 
 The code of the polynomial fit can again be found in `lane_finding.py` under the function `fit_polynomial()`.
-Then, the warped image is investigated for peaks in the histogram of their x-values to find the x-position of the lane beginnings.
+Then, the warped image is investigated for peaks in the histogram of their x-values to find the x-position of the lane beginnings. The beginnings are meant to be the starting at the bottom of the image or in other words as close as possible to the ego vehicle.
 
-The resulting histogram of the test image can be seen here:  
+The resulting histograms of the test image can be seen here:  
 
 ![alt text][image7]
 
-Next, a polynomial of second degree is fit through the defined sliding windows.
+The clear peaks indicate that finding the beginning of the lanes is not to hard for this example.  
 
-The result of the polynomial fit can be seen here:
+Next, a polynomial of second degree is fit through the defined sliding windows. The result of the polynomial fit can be seen here:
 
 ![alt text][image8]
 
