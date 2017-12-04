@@ -12,11 +12,10 @@
 [image8]: ./output_images/test_image/polynomial_fit.png "Polynomial fit"
 [image9]: ./output_images/test_image/result.png "Result"
 [image10]: ./output_images/test_image/history.png "History of curvature and lane offset"
-[video1]: ./project_video.mp4 "Video"
 
 ### Pipeline
 
-Here is a [link to my video result](./project_video.mp4)
+Here is a [link to my video result](./output_video.mp4)
 
 The executable code can be found in: `main.py`
 
@@ -69,7 +68,7 @@ The code can be found in `lane_finding.py` in function `image_thresholding()` an
 #### 3. Perspective transform 
 
 The code for the perspective transform includes a function called `perspective_transform()` in `lane_finding.py`.
-For the test image of straight lines the trapezium and the resulting warped rectangle are defined as:
+For the test image `straight_lines1.jpg` the trapezium and the resulting warped rectangle are defined as:
 
 ```python
 self.trapezium = np.float32([
