@@ -17,7 +17,7 @@
 
 The resulting video can be found on YouTube by clicking on the image below:
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/pQ3EL-UoUpI/0.jpg)](https://www.youtube.com/watch?v=pQ3EL-UoUpI)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/joKuHeSrCAo/0.jpg)](https://www.youtube.com/watch?v=joKuHeSrCAo)
 
 The executable code can be found in: `main.py`
 
